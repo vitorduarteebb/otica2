@@ -83,16 +83,19 @@ def create_demo_data():
     
     # Criar produtos de exemplo
     products_data = [
-        {'name': 'Armação Ray-Ban Aviador', 'category': 'armacoes', 'price': 450.00, 'stock': 15},
-        {'name': 'Armação Oakley Sport', 'category': 'armacoes', 'price': 380.00, 'stock': 8},
-        {'name': 'Lente Transitions', 'category': 'lentes', 'price': 280.00, 'stock': 25},
-        {'name': 'Lente Anti-Reflexo', 'category': 'lentes', 'price': 150.00, 'stock': 30},
-        {'name': 'Armação Gucci Premium', 'category': 'armacoes', 'price': 1200.00, 'stock': 3},
-        {'name': 'Lente Progressiva', 'category': 'lentes', 'price': 450.00, 'stock': 12},
+        {'name': 'Armação Ray-Ban Aviador', 'brand': 'Ray-Ban', 'model': 'RB3025', 'code': 'RB3025-001', 'category': 'armacoes', 'price': 450.00, 'stock': 15},
+        {'name': 'Armação Oakley Sport', 'brand': 'Oakley', 'model': 'OX8046', 'code': 'OX8046-002', 'category': 'armacoes', 'price': 380.00, 'stock': 8},
+        {'name': 'Lente Transitions', 'brand': 'Transitions', 'model': 'XTRActive', 'code': 'TRANS-XT-001', 'category': 'lentes', 'price': 280.00, 'stock': 25},
+        {'name': 'Lente Anti-Reflexo', 'brand': 'Essilor', 'model': 'Crizal', 'code': 'CRIZAL-001', 'category': 'lentes', 'price': 150.00, 'stock': 30},
+        {'name': 'Armação Gucci Premium', 'brand': 'Gucci', 'model': 'GG0060S', 'code': 'GUCCI-GG0060S', 'category': 'armacoes', 'price': 1200.00, 'stock': 3},
+        {'name': 'Lente Progressiva', 'brand': 'Varilux', 'model': 'Comfort Max', 'code': 'VARILUX-CM', 'category': 'lentes', 'price': 450.00, 'stock': 12},
     ]
     
     products = []
     for product_data in products_data:
+        # Extrair dados do produto
+        stock = product_data.pop('stock', 0)
+        
         product, created = Product.objects.get_or_create(
             name=product_data['name'],
             defaults=product_data
@@ -100,6 +103,15 @@ def create_demo_data():
         products.append(product)
         if created:
             print(f"✅ Produto criado: {product.name}")
+            
+            # Adicionar estoque para cada loja
+            for store in stores:
+                from otica_app.models import StoreProduct
+                StoreProduct.objects.create(
+                    store=store,
+                    product=product,
+                    quantity=stock
+                )
     
     # Criar vendas de exemplo (últimos 30 dias)
     payment_methods = ['dinheiro', 'cartao_credito', 'cartao_debito', 'pix']

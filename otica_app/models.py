@@ -51,6 +51,9 @@ class Product(models.Model):
         ('armacoes', 'Armações'),
     )
     name = models.CharField('Nome', max_length=100)
+    brand = models.CharField('Marca', max_length=100, blank=True)
+    model = models.CharField('Modelo', max_length=100, blank=True)
+    code = models.CharField('Código', max_length=50, blank=True)
     description = models.TextField('Descrição')
     price = models.DecimalField('Preço', max_digits=10, decimal_places=2)
     cost = models.DecimalField('Preço de Custo', max_digits=10, decimal_places=2)

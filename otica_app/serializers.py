@@ -56,7 +56,7 @@ class ProductSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'cost', 'category', 'store_quantity', 'image']
+        fields = ['id', 'name', 'brand', 'model', 'code', 'description', 'price', 'cost', 'category', 'store_quantity', 'image']
     
     def get_store_quantity(self, obj):
         request = self.context.get('request')
@@ -81,13 +81,16 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class StoreProductSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
+    product_brand = serializers.CharField(source='product.brand', read_only=True)
+    product_model = serializers.CharField(source='product.model', read_only=True)
+    product_code = serializers.CharField(source='product.code', read_only=True)
     product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
     product_category = serializers.CharField(source='product.category', read_only=True)
     store_name = serializers.CharField(source='store.name', read_only=True)
     
     class Meta:
         model = StoreProduct
-        fields = ['id', 'store', 'product', 'quantity', 'product_name', 'product_price', 'product_category', 'store_name']
+        fields = ['id', 'store', 'product', 'quantity', 'product_name', 'product_brand', 'product_model', 'product_code', 'product_price', 'product_category', 'store_name']
 
 
 class SellerSerializer(serializers.ModelSerializer):
