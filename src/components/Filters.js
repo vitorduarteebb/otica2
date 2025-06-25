@@ -6,6 +6,7 @@ const Filters = ({ onFiltersChange, showStoreFilter = true, showDateFilter = tru
   const { user } = useAuth();
   const [stores, setStores] = useState([]);
   const [sellers, setSellers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [filters, setFilters] = useState({
     store: '',
     start_date: '',
@@ -24,7 +25,10 @@ const Filters = ({ onFiltersChange, showStoreFilter = true, showDateFilter = tru
     if (showSellerFilter) {
       fetchSellers();
     }
-  }, [showStoreFilter, showSellerFilter, user.role]);
+    if (showCategoryFilter) {
+      fetchCategories();
+    }
+  }, [showStoreFilter, showSellerFilter, showCategoryFilter, user.role]);
 
   const fetchStores = async () => {
     try {
@@ -41,6 +45,15 @@ const Filters = ({ onFiltersChange, showStoreFilter = true, showDateFilter = tru
       setSellers(response.data.results || response.data || []);
     } catch (error) {
       console.error('Erro ao buscar vendedores:', error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/api/categories/');
+      setCategories(response.data.results || response.data || []);
+    } catch (error) {
+      console.error('Erro ao buscar categorias:', error);
     }
   };
 
@@ -136,8 +149,11 @@ const Filters = ({ onFiltersChange, showStoreFilter = true, showDateFilter = tru
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Todas as Categorias</option>
-              <option value="lentes">Lentes</option>
-              <option value="armacoes">Armações</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
             </select>
           </div>
         )}

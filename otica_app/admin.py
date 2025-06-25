@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Store, Product, StoreProduct, Seller, Sale, SaleItem, StockMovement, CashFlow
+from .models import User, Store, Product, StoreProduct, Seller, Sale, SaleItem, StockMovement, CashFlow, Category, Cliente
 
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'is_staff', 'store')
@@ -22,6 +22,12 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('username', 'first_name', 'last_name', 'email')
     ordering = ('username',)
 
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'active', 'created_at')
+    list_filter = ('active', 'created_at')
+    search_fields = ('name', 'description')
+    ordering = ('name',)
+
 class SaleItemInline(admin.TabularInline):
     model = SaleItem
     extra = 1
@@ -41,9 +47,9 @@ class StoreAdmin(admin.ModelAdmin):
     search_fields = ('name', 'address', 'phone')
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'price', 'cost', 'image_tag')
-    list_filter = ('category',)
-    search_fields = ('name', 'description')
+    list_display = ('name', 'brand', 'model', 'code', 'category', 'price', 'cost', 'image_tag')
+    list_filter = ('category', 'brand')
+    search_fields = ('name', 'brand', 'model', 'code', 'description')
     readonly_fields = ('image_tag',)
     
     def image_tag(self, obj):
@@ -65,10 +71,16 @@ class SellerAdmin(admin.ModelAdmin):
     list_filter = ['store']
     search_fields = ['name', 'email']
 
+@admin.register(Cliente)
+class ClienteAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'email', 'telefone', 'cpf', 'grau_od', 'grau_oe', 'dnp_od', 'dnp_oe', 'adicao')
+    search_fields = ('nome', 'email', 'cpf')
+
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Store, StoreAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Sale, SaleAdmin)
 admin.site.register(SaleItem)
 admin.site.register(StockMovement)
-admin.site.register(CashFlow) 
+admin.site.register(CashFlow)
+admin.site.register(Category, CategoryAdmin) 

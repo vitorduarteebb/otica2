@@ -23,13 +23,17 @@ const Sales = () => {
     customer_phone: '',
     payment_method: 'dinheiro',
     seller: '',
-    items: [{ product: '', quantity: 1, unit_price: 0 }]
+    items: [{ product: '', quantity: 1, unit_price: 0 }],
+    cliente: '',
   });
+  const [clientes, setClientes] = useState([]);
+  const [clienteBusca, setClienteBusca] = useState('');
 
   useEffect(() => {
     fetchSales();
     fetchProducts();
     fetchSellers();
+    fetchClientes();
   }, [filters]);
 
   const fetchSales = async () => {
@@ -62,6 +66,15 @@ const Sales = () => {
     }
   };
 
+  const fetchClientes = async () => {
+    try {
+      const res = await api.get('/api/clientes/');
+      setClientes(res.data.results || res.data);
+    } catch (e) {
+      setClientes([]);
+    }
+  };
+
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
   };
@@ -75,6 +88,8 @@ const Sales = () => {
         newItems[index].unit_price = product ? product.price : 0;
       }
       setFormData({ ...formData, items: newItems });
+    } else if (e.target.name === 'cliente') {
+      setFormData({ ...formData, cliente: e.target.value });
     } else {
       setFormData({ ...formData, [e.target.name]: e.target.value });
     }
@@ -107,7 +122,8 @@ const Sales = () => {
         customer_phone: '',
         payment_method: 'dinheiro',
         seller: '',
-        items: [{ product: '', quantity: 1, unit_price: 0 }]
+        items: [{ product: '', quantity: 1, unit_price: 0 }],
+        cliente: '',
       });
       fetchSales();
     } catch (error) {
@@ -191,8 +207,31 @@ const Sales = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Nome do Cliente</label>
-                  <input type="text" name="customer_name" value={formData.customer_name} onChange={handleFormChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required />
+                  <label className="block text-sm font-medium text-gray-700">Cliente</label>
+                  <input
+                    type="text"
+                    placeholder="Buscar por nome, CPF ou email..."
+                    value={clienteBusca}
+                    onChange={e => setClienteBusca(e.target.value)}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                  />
+                  <select
+                    name="cliente"
+                    value={formData.cliente || ''}
+                    onChange={handleFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                    required
+                  >
+                    <option value="">Selecione um cliente</option>
+                    {clientes.filter(c =>
+                      c.nome.toLowerCase().includes(clienteBusca.toLowerCase()) ||
+                      (c.cpf && c.cpf.includes(clienteBusca)) ||
+                      (c.email && c.email.toLowerCase().includes(clienteBusca.toLowerCase()))
+                    ).map(c => (
+                      <option key={c.id} value={c.id}>{c.nome} {c.cpf ? `- ${c.cpf}` : ''}</option>
+                    ))}
+                  </select>
+                  <div className="text-xs text-gray-500 mt-1">Não encontrou? <Link to="/admin/clientes">Cadastre um novo cliente</Link></div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Email do Cliente</label>

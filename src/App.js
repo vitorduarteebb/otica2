@@ -8,6 +8,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import Users from './pages/admin/Users';
 import Stores from './pages/admin/Stores';
 import Products from './pages/admin/Products';
+import Categories from './pages/admin/Categories';
 import Inventory from './pages/admin/Inventory';
 import Sales from './pages/admin/Sales';
 import Reports from './pages/admin/Reports';
@@ -18,6 +19,8 @@ import AdminSellers from './pages/admin/Sellers';
 import AdminUsers from './pages/admin/Users';
 import AdminOrders from './pages/admin/Orders';
 import GerenteOrders from './pages/gerente/Orders';
+import Clientes from './pages/admin/Clientes';
+import ClientePerfil from './pages/admin/ClientePerfil';
 
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
   const { user, loading } = useAuth();
@@ -64,8 +67,11 @@ const AppRoutes = () => {
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="stores" element={<Stores />} />
                 <Route path="products" element={<Products />} />
+                <Route path="categories" element={<Categories />} />
                 <Route path="inventory" element={<Inventory />} />
                 <Route path="sales" element={<Sales />} />
+                <Route path="clientes" element={<Clientes />} />
+                <Route path="cliente/:id" element={<ClientePerfil />} />
                 <Route path="sellers" element={<AdminSellers />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="cash-till" element={<CashTill />} />

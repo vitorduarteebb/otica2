@@ -4,11 +4,11 @@ from rest_framework.response import Response
 from django.db.models import Sum, Count, F, DecimalField, ExpressionWrapper
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User, Store, Product, Seller, Sale, SaleItem, StoreProduct, CashTillSession, Order
+from .models import User, Store, Product, Seller, Sale, SaleItem, StoreProduct, CashTillSession, Order, Category, Cliente
 from .serializers import (
     UserSerializer, StoreSerializer, ProductSerializer, SellerSerializer,
     SaleSerializer, SaleCreateSerializer, StoreProductSerializer, CashTillSessionSerializer,
-    OrderSerializer
+    OrderSerializer, CategorySerializer, ClienteSerializer
 )
 from rest_framework.serializers import ValidationError
 from django.utils import timezone
@@ -105,6 +105,39 @@ class StoreRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     def perform_destroy(self, instance):
         if self.request.user.role != 'admin':
             raise permissions.PermissionDenied("Apenas administradores podem excluir lojas.")
+        instance.delete()
+
+# --- Category Views ---
+
+class CategoryListCreateView(generics.ListCreateAPIView):
+    queryset = Category.objects.filter(active=True)
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Category.objects.filter(active=True).order_by('name')
+
+    def perform_create(self, serializer):
+        if self.request.user.role != 'admin':
+            raise permissions.PermissionDenied("Apenas administradores podem criar categorias.")
+        serializer.save()
+
+class CategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_update(self, serializer):
+        if self.request.user.role != 'admin':
+            raise permissions.PermissionDenied("Apenas administradores podem editar categorias.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if self.request.user.role != 'admin':
+            raise permissions.PermissionDenied("Apenas administradores podem excluir categorias.")
+        # Verificar se há produtos usando esta categoria
+        if Product.objects.filter(category=instance).exists():
+            raise ValidationError("Não é possível excluir uma categoria que possui produtos associados.")
         instance.delete()
 
 # --- Product Views ---
@@ -542,4 +575,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             except Store.DoesNotExist:
                 raise ValidationError({'store': 'Loja inválida.'})
 
-        serializer.save(store=store) 
+        serializer.save(store=store)
+
+# --- Cliente Views ---
+
+class ClienteViewSet(viewsets.ModelViewSet):
+    queryset = Cliente.objects.all().order_by('-criado_em')
+    serializer_class = ClienteSerializer
+    permission_classes = [permissions.IsAuthenticated] 

@@ -5,6 +5,7 @@ Sistema completo de gestão para óticas, desenvolvido com Django (Backend) e Re
 ## 🚀 Funcionalidades
 
 - **Gestão de Produtos**: Cadastro, edição e controle de estoque
+- **Gestão de Categorias**: Sistema dinâmico de categorias de produtos
 - **Gestão de Vendas**: Registro de vendas com múltiplos produtos
 - **Gestão de Vendedores**: Cadastro e controle de vendedores por loja
 - **Gestão de Lojas**: Suporte a múltiplas filiais
@@ -92,9 +93,10 @@ npm start
 
 O sistema vem com dados de exemplo para demonstração:
 
+- **2 Categorias**: Lentes e Armações
 - **2 Lojas**: Ótica Central e Ótica Express
 - **3 Vendedores**: Maria Santos, Pedro Costa, Ana Oliveira
-- **6 Produtos**: Armações e lentes variadas
+- **9 Produtos**: Armações e lentes variadas com categorias dinâmicas
 - **20 Vendas**: Vendas dos últimos 30 dias
 - **Sessões de Caixa**: Dados de fluxo de caixa
 
@@ -105,32 +107,39 @@ O sistema vem com dados de exemplo para demonstração:
 - Mostre o dashboard com estatísticas
 - Navegue pelo menu lateral
 
-### 2. Gestão de Produtos
-- Cadastre um novo produto
+### 2. Gestão de Categorias (NOVO!)
+- Acesse "Categorias" no menu admin
+- Cadastre uma nova categoria
+- Edite categorias existentes
+- Mostre como as categorias são usadas nos produtos
+
+### 3. Gestão de Produtos
+- Cadastre um novo produto com categoria dinâmica
 - Mostre filtros por categoria e estoque
 - Edite um produto existente
+- Demonstre a relação produto-categoria
 
-### 3. Gestão de Vendas
+### 4. Gestão de Vendas
 - Registre uma nova venda
 - Selecione produtos e vendedor
 - Mostre histórico de vendas
 
-### 4. Gestão de Vendedores
+### 5. Gestão de Vendedores
 - Cadastre um novo vendedor
 - Associe a uma loja
 - Mostre lista de vendedores
 
-### 5. Relatórios
+### 6. Relatórios
 - Demonstre relatórios de vendas
-- Mostre filtros por data
+- Mostre filtros por data e categoria
 - Apresente gráficos e estatísticas
 
-### 6. Sistema de Caixa
+### 7. Sistema de Caixa
 - Mostre sessões de caixa
 - Demonstre fluxo de caixa
 - Apresente controle financeiro
 
-### 7. Controle de Acesso
+### 8. Controle de Acesso
 - Faça logout e login como gerente
 - Mostre restrições de acesso
 - Demonstre diferenças de permissões
@@ -158,9 +167,15 @@ export DJANGO_SETTINGS_MODULE="otica_backend.settings_production"
 otica1/
 ├── otica_backend/          # Configurações Django
 ├── otica_app/             # Aplicação principal Django
+│   ├── models.py          # Modelos (Product, Category, etc.)
+│   ├── views.py           # Views da API
+│   ├── serializers.py     # Serializers para API
+│   └── migrations/        # Migrações do banco
 ├── src/                   # Frontend React
 │   ├── components/        # Componentes reutilizáveis
 │   ├── pages/            # Páginas da aplicação
+│   │   ├── admin/        # Páginas administrativas
+│   │   └── gerente/      # Páginas do gerente
 │   ├── contexts/         # Contextos React
 │   └── services/         # Serviços de API
 ├── media/                # Arquivos de mídia
@@ -168,6 +183,19 @@ otica1/
 ├── package.json          # Dependências Node.js
 └── README.md            # Este arquivo
 ```
+
+## 🆕 Novidades na Versão Atual
+
+### Sistema de Categorias Dinâmicas
+- **Categorias Flexíveis**: Agora você pode criar, editar e gerenciar categorias de produtos dinamicamente
+- **Migração Automática**: O sistema migra automaticamente produtos antigos para o novo sistema de categorias
+- **Interface Administrativa**: Nova página para gerenciar categorias no painel admin
+- **Filtros Inteligentes**: Filtros de produtos agora usam categorias dinâmicas
+
+### Melhorias na API
+- **Endpoint de Categorias**: Nova API `/api/categories/` para gerenciar categorias
+- **Relacionamentos**: Produtos agora têm relacionamento ForeignKey com categorias
+- **Validação**: Validação automática de categorias existentes
 
 ## 🐛 Solução de Problemas
 
@@ -186,6 +214,22 @@ python manage.py makemigrations --merge
 python manage.py migrate
 ```
 
+### Problemas com Categorias
+Se houver problemas com a migração de categorias:
+```bash
+# Verificar status das migrações
+python manage.py showmigrations
+
+# Aplicar migrações pendentes
+python manage.py migrate
+
+# Verificar dados no banco
+python manage.py shell
+>>> from otica_app.models import Category, Product
+>>> Category.objects.all()
+>>> Product.objects.all()
+```
+
 ### Limpar Cache
 ```bash
 # Frontend
@@ -198,8 +242,23 @@ npm install
 
 Para dúvidas ou problemas:
 - Verifique os logs no console
-- Consulte a documentação do Django e React
-- Verifique se todas as dependências estão instaladas
+- Consulte a documentação da API em `/api/`
+- Verifique o status das migrações com `python manage.py showmigrations`
+
+## 🔄 Histórico de Versões
+
+### v2.0 - Sistema de Categorias Dinâmicas
+- ✅ Implementado sistema de categorias dinâmicas
+- ✅ Migração automática de dados antigos
+- ✅ Interface administrativa para categorias
+- ✅ Filtros atualizados para usar categorias dinâmicas
+- ✅ API de categorias implementada
+
+### v1.0 - Versão Inicial
+- ✅ Sistema básico de gestão de ótica
+- ✅ Gestão de produtos, vendas e vendedores
+- ✅ Sistema de caixa e relatórios
+- ✅ Controle de acesso por níveis
 
 ## 📄 Licença
 

@@ -6,6 +6,7 @@ router = DefaultRouter()
 router.register(r'store-products', views.StoreProductViewSet, basename='store-product')
 router.register(r'cash-till-sessions', views.CashTillSessionViewSet, basename='cashtillsession')
 router.register(r'orders', views.OrderViewSet, basename='order')
+router.register(r'clientes', views.ClienteViewSet, basename='cliente')
 
 urlpatterns = [
     # Auth
@@ -20,6 +21,10 @@ urlpatterns = [
     # Stores
     path('stores/', views.StoreListCreateView.as_view(), name='store-list-create'),
     path('stores/<int:pk>/', views.StoreRetrieveUpdateDestroyView.as_view(), name='store-detail'),
+
+    # Categories
+    path('categories/', views.CategoryListCreateView.as_view(), name='category-list-create'),
+    path('categories/<int:pk>/', views.CategoryRetrieveUpdateDestroyView.as_view(), name='category-detail'),
 
     # Products
     path('products/', views.ProductListCreateView.as_view(), name='product-list-create'),

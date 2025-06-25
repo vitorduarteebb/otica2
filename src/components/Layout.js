@@ -16,7 +16,8 @@ import {
   UserSquare,
   Glasses,
   DollarSign,
-  ClipboardList
+  ClipboardList,
+  Tag
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -35,12 +36,14 @@ const Layout = ({ children }) => {
     { name: 'Pedidos', href: user?.role === 'admin' ? '/admin/orders' : '/gerente/orders', icon: ClipboardList, roles: ['admin', 'gerente'] },
     { name: 'Gestão de Caixa', href: user?.role === 'admin' ? '/admin/cash-till' : '/gerente/cash-till', icon: DollarSign, roles: ['admin', 'gerente'] },
     { name: 'Vendas', href: user?.role === 'admin' ? '/admin/sales' : '/gerente/sales', icon: ShoppingCart, roles: ['admin', 'gerente'] },
+    { name: 'Clientes', href: '/admin/clientes', icon: Users, roles: ['admin'] },
     { name: 'Produtos', href: user?.role === 'admin' ? '/admin/products' : '/gerente/products', icon: Package, roles: ['admin', 'gerente'] },
     { name: 'Estoque', href: user?.role === 'admin' ? '/admin/inventory' : '/gerente/inventory', icon: Archive, roles: ['admin', 'gerente'] },
     { name: 'Relatórios', href: user?.role === 'admin' ? '/admin/reports' : '/gerente/reports', icon: BarChart, roles: ['admin', 'gerente'] },
     { name: 'Lojas', href: '/admin/stores', icon: Store, roles: ['admin'] },
     { name: 'Vendedores', href: '/admin/sellers', icon: UserSquare, roles: ['admin'] },
     { name: 'Usuários', href: '/admin/users', icon: Users, roles: ['admin'] },
+    { name: 'Categorias', href: '/admin/categories', icon: Tag, roles: ['admin'] },
   ];
 
   const filteredNavLinks = navLinks.filter(link => link.roles.includes(user?.role));
@@ -70,16 +73,16 @@ const Layout = ({ children }) => {
               }`}
             >
               <link.icon className="h-5 w-5 mr-3" />
-              {link.name}
+              <span className="hidden sm:inline">{link.name}</span>
             </Link>
           ))}
         </nav>
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="flex items-center justify-between md:justify-end p-4 bg-white shadow-md z-10">
+        <header className="flex items-center justify-between md:justify-end p-4 bg-white shadow-md z-10 sticky top-0 w-full">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="text-gray-500 md:hidden"
@@ -87,7 +90,7 @@ const Layout = ({ children }) => {
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
           <div className="flex items-center space-x-4">
-            <span className="text-gray-700">
+            <span className="text-gray-700 text-sm sm:text-base">
               Olá, {user?.first_name || user?.username}
             </span>
             <button
@@ -95,13 +98,13 @@ const Layout = ({ children }) => {
               className="flex items-center text-red-500 hover:text-red-700"
             >
               <LogOut className="h-5 w-5 mr-1" />
-              Sair
+              <span className="hidden sm:inline">Sair</span>
             </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-2 sm:p-6">
           {children}
         </main>
       </div>

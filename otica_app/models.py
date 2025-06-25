@@ -45,19 +45,31 @@ class Store(models.Model):
         return self.name
 
 
+class Category(models.Model):
+    name = models.CharField('Nome', max_length=100, unique=True)
+    description = models.TextField('Descrição', blank=True)
+    active = models.BooleanField('Ativo', default=True)
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Categoria'
+        verbose_name_plural = 'Categorias'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
-    CATEGORY_CHOICES = (
-        ('lentes', 'Lentes'),
-        ('armacoes', 'Armações'),
-    )
     name = models.CharField('Nome', max_length=100)
     brand = models.CharField('Marca', max_length=100, blank=True)
     model = models.CharField('Modelo', max_length=100, blank=True)
-    code = models.CharField('Código', max_length=50, blank=True)
+    code = models.CharField('Código', max_length=50, blank=True, unique=True, editable=False)
     description = models.TextField('Descrição')
     price = models.DecimalField('Preço', max_digits=10, decimal_places=2)
     cost = models.DecimalField('Preço de Custo', max_digits=10, decimal_places=2)
-    category = models.CharField('Categoria', max_length=10, choices=CATEGORY_CHOICES)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name='Categoria')
     image = models.ImageField(upload_to='products/', null=True, blank=True, verbose_name='Foto')
     created_at = models.DateTimeField('Criado em', auto_now_add=True)
     updated_at = models.DateTimeField('Atualizado em', auto_now=True)
@@ -69,6 +81,17 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            # Busca o maior código já existente (considerando formato 01, 02, 03...)
+            last_product = Product.objects.order_by('-id').first()
+            if last_product and last_product.code and last_product.code.isdigit():
+                next_code = int(last_product.code) + 1
+            else:
+                next_code = 1
+            self.code = f"{next_code:02d}"
+        super().save(*args, **kwargs)
 
 
 class StoreProduct(models.Model):
@@ -168,6 +191,7 @@ class Sale(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='sales', verbose_name='Loja')
     created_at = models.DateTimeField('Criado em', auto_now_add=True)
     updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+    cliente = models.ForeignKey('Cliente', on_delete=models.SET_NULL, null=True, blank=True, related_name='vendas', verbose_name='Cliente')
     
     class Meta:
         verbose_name = 'Venda'
@@ -290,4 +314,41 @@ class Order(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Pedido #{self.id} - {self.customer_name}" 
+        return f"Pedido #{self.id} - {self.customer_name}"
+
+
+class Cliente(models.Model):
+    SEXO_CHOICES = [
+        ("M", "Masculino"),
+        ("F", "Feminino"),
+        ("O", "Outro"),
+    ]
+    nome = models.CharField('Nome', max_length=200)
+    email = models.EmailField('E-mail', blank=True)
+    telefone = models.CharField('Telefone', max_length=20, blank=True)
+    cpf = models.CharField('CPF', max_length=14, blank=True, unique=True)
+    data_nascimento = models.DateField('Data de Nascimento', null=True, blank=True)
+    sexo = models.CharField('Sexo', max_length=1, choices=SEXO_CHOICES, blank=True)
+    endereco = models.CharField('Endereço', max_length=255, blank=True)
+    numero = models.CharField('Número', max_length=10, blank=True)
+    bairro = models.CharField('Bairro', max_length=100, blank=True)
+    cidade = models.CharField('Cidade', max_length=100, blank=True)
+    estado = models.CharField('Estado', max_length=2, blank=True)
+    cep = models.CharField('CEP', max_length=10, blank=True)
+    observacoes = models.TextField('Observações', blank=True)
+    grau_od = models.CharField('Grau OD', max_length=50, blank=True, null=True)
+    grau_oe = models.CharField('Grau OE', max_length=50, blank=True, null=True)
+    dnp_od = models.CharField('DNP OD', max_length=20, blank=True, null=True)
+    dnp_oe = models.CharField('DNP OE', max_length=20, blank=True, null=True)
+    adicao = models.CharField('Adição', max_length=20, blank=True, null=True)
+    observacoes_opticas = models.TextField('Observações Ópticas', blank=True, null=True)
+    criado_em = models.DateTimeField('Criado em', auto_now_add=True)
+    atualizado_em = models.DateTimeField('Atualizado em', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Cliente'
+        verbose_name_plural = 'Clientes'
+        ordering = ['nome']
+
+    def __str__(self):
+        return f"{self.nome} ({self.cpf})" if self.cpf else self.nome 

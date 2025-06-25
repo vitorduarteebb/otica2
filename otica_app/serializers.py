@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
-from .models import User, Store, Product, Seller, Sale, SaleItem, StockMovement, CashFlow, StoreProduct, CashTillSession, Order
+from .models import User, Store, Product, Seller, Sale, SaleItem, StockMovement, CashFlow, StoreProduct, CashTillSession, Order, Category, Cliente
 from django.db.models import Sum
 
 
@@ -50,13 +50,21 @@ class StoreSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'address', 'phone', 'email', 'manager']
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'description', 'active', 'created_at', 'updated_at']
+
+
 class ProductSerializer(serializers.ModelSerializer):
     store_quantity = serializers.SerializerMethodField()
+    category_name = serializers.CharField(source='category.name', read_only=True)
     image = serializers.ImageField(required=False, allow_null=True)
     
     class Meta:
         model = Product
-        fields = ['id', 'name', 'brand', 'model', 'code', 'description', 'price', 'cost', 'category', 'store_quantity', 'image']
+        fields = ['id', 'name', 'brand', 'model', 'code', 'description', 'price', 'cost', 'category', 'category_name', 'store_quantity', 'image']
+        read_only_fields = ['code']
     
     def get_store_quantity(self, obj):
         request = self.context.get('request')
@@ -85,7 +93,7 @@ class StoreProductSerializer(serializers.ModelSerializer):
     product_model = serializers.CharField(source='product.model', read_only=True)
     product_code = serializers.CharField(source='product.code', read_only=True)
     product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
-    product_category = serializers.CharField(source='product.category', read_only=True)
+    product_category = serializers.CharField(source='product.category.name', read_only=True)
     store_name = serializers.CharField(source='store.name', read_only=True)
     
     class Meta:
@@ -111,16 +119,29 @@ class SaleItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['unit_price', 'total_price']
 
 
+class ClienteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cliente
+        fields = [
+            'id', 'nome', 'email', 'telefone', 'cpf', 'data_nascimento', 'sexo',
+            'endereco', 'numero', 'bairro', 'cidade', 'estado', 'cep', 'observacoes',
+            'grau_od', 'grau_oe', 'dnp_od', 'dnp_oe', 'adicao', 'observacoes_opticas',
+            'criado_em', 'atualizado_em'
+        ]
+
+
 class SaleSerializer(serializers.ModelSerializer):
     items = SaleItemSerializer(many=True, read_only=True)
     store_name = serializers.CharField(source='store.name', read_only=True)
     seller_name = serializers.CharField(source='seller.name', read_only=True)
+    cliente = ClienteSerializer(read_only=True)
+    cliente_id = serializers.PrimaryKeyRelatedField(source='cliente', queryset=Cliente.objects.all(), write_only=True, required=False)
     
     class Meta:
         model = Sale
         fields = [
-            'id', 'store', 'store_name', 'seller', 'seller_name', 'customer_name',
-            'customer_email', 'customer_phone', 'total_amount', 'payment_method', 
+            'id', 'store', 'store_name', 'seller', 'seller_name', 'cliente', 'cliente_id',
+            'customer_name', 'customer_email', 'customer_phone', 'total_amount', 'payment_method', 
             'sale_date', 'items'
         ]
 
@@ -128,10 +149,11 @@ class SaleSerializer(serializers.ModelSerializer):
 class SaleCreateSerializer(serializers.ModelSerializer):
     items = SaleItemSerializer(many=True)
     seller = serializers.PrimaryKeyRelatedField(queryset=Seller.objects.all())
+    cliente = serializers.PrimaryKeyRelatedField(queryset=Cliente.objects.all(), required=False, allow_null=True)
     
     class Meta:
         model = Sale
-        fields = ['customer_name', 'customer_email', 'customer_phone', 'payment_method', 'seller', 'items']
+        fields = ['cliente', 'customer_name', 'customer_email', 'customer_phone', 'payment_method', 'seller', 'items']
     
     def create(self, validated_data):
         request = self.context.get('request')
@@ -143,9 +165,6 @@ class SaleCreateSerializer(serializers.ModelSerializer):
 
         try:
             if user.role == 'admin':
-                # For admin, we need to find a session associated with them.
-                # This logic might need refinement based on business rules,
-                # e.g., an admin might need to select a store/session to sell for.
                 session = CashTillSession.objects.filter(opened_by=user, status='aberto').first()
             elif user.store:
                 session = CashTillSession.objects.filter(store=user.store, status='aberto').first()

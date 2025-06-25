@@ -14,7 +14,7 @@ from django.core.management import execute_from_command_line
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'otica_backend.settings')
 django.setup()
 
-from otica_app.models import Store, Product, Seller, Sale, CashTillSession, CashFlow
+from otica_app.models import Store, Product, Seller, Sale, CashTillSession, CashFlow, Category
 from django.utils import timezone
 from datetime import datetime, timedelta
 import random
@@ -81,14 +81,34 @@ def create_demo_data():
         if created:
             print(f"✅ Vendedor criado: {seller.name}")
     
+    # Criar categorias de exemplo
+    categories_data = [
+        {'name': 'Lentes', 'description': 'Lentes oftálmicas e de contato'},
+        {'name': 'Armações', 'description': 'Armações de óculos'},
+        {'name': 'Acessórios', 'description': 'Acessórios para óculos'},
+        {'name': 'Lentes de Contato', 'description': 'Lentes de contato descartáveis e permanentes'},
+    ]
+    
+    categories = []
+    for category_data in categories_data:
+        category, created = Category.objects.get_or_create(
+            name=category_data['name'],
+            defaults=category_data
+        )
+        categories.append(category)
+        if created:
+            print(f"✅ Categoria criada: {category.name}")
+    
     # Criar produtos de exemplo
     products_data = [
-        {'name': 'Armação Ray-Ban Aviador', 'brand': 'Ray-Ban', 'model': 'RB3025', 'code': 'RB3025-001', 'category': 'armacoes', 'price': 450.00, 'stock': 15},
-        {'name': 'Armação Oakley Sport', 'brand': 'Oakley', 'model': 'OX8046', 'code': 'OX8046-002', 'category': 'armacoes', 'price': 380.00, 'stock': 8},
-        {'name': 'Lente Transitions', 'brand': 'Transitions', 'model': 'XTRActive', 'code': 'TRANS-XT-001', 'category': 'lentes', 'price': 280.00, 'stock': 25},
-        {'name': 'Lente Anti-Reflexo', 'brand': 'Essilor', 'model': 'Crizal', 'code': 'CRIZAL-001', 'category': 'lentes', 'price': 150.00, 'stock': 30},
-        {'name': 'Armação Gucci Premium', 'brand': 'Gucci', 'model': 'GG0060S', 'code': 'GUCCI-GG0060S', 'category': 'armacoes', 'price': 1200.00, 'stock': 3},
-        {'name': 'Lente Progressiva', 'brand': 'Varilux', 'model': 'Comfort Max', 'code': 'VARILUX-CM', 'category': 'lentes', 'price': 450.00, 'stock': 12},
+        {'name': 'Armação Ray-Ban Aviador', 'brand': 'Ray-Ban', 'model': 'RB3025', 'code': 'RB3025-001', 'category': categories[1], 'price': 450.00, 'stock': 15},
+        {'name': 'Armação Oakley Sport', 'brand': 'Oakley', 'model': 'OX8046', 'code': 'OX8046-002', 'category': categories[1], 'price': 380.00, 'stock': 8},
+        {'name': 'Lente Transitions', 'brand': 'Transitions', 'model': 'XTRActive', 'code': 'TRANS-XT-001', 'category': categories[0], 'price': 280.00, 'stock': 25},
+        {'name': 'Lente Anti-Reflexo', 'brand': 'Essilor', 'model': 'Crizal', 'code': 'CRIZAL-001', 'category': categories[0], 'price': 150.00, 'stock': 30},
+        {'name': 'Armação Gucci Premium', 'brand': 'Gucci', 'model': 'GG0060S', 'code': 'GUCCI-GG0060S', 'category': categories[1], 'price': 1200.00, 'stock': 3},
+        {'name': 'Lente Progressiva', 'brand': 'Varilux', 'model': 'Comfort Max', 'code': 'VARILUX-CM', 'category': categories[0], 'price': 450.00, 'stock': 12},
+        {'name': 'Frasco para Lentes', 'brand': 'Genérico', 'model': 'GL-001', 'code': 'FRASCO-001', 'category': categories[2], 'price': 15.00, 'stock': 50},
+        {'name': 'Lente de Contato Mensal', 'brand': 'Acuvue', 'model': 'Oasys', 'code': 'ACUVUE-OASYS', 'category': categories[3], 'price': 120.00, 'stock': 100},
     ]
     
     products = []
