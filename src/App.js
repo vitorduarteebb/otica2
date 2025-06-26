@@ -42,7 +42,7 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/otica2">
       <AuthProvider>
         <CashTillProvider>
           <AppRoutes />

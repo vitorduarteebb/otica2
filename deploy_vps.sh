@@ -73,8 +73,7 @@ source venv/bin/activate
 log "Instalando dependências Python..."
 pip install --upgrade pip
 pip install --upgrade setuptools wheel
-pip install -r requirements.txt
-pip install gunicorn psycopg2-binary
+pip install --timeout 300 -r requirements.txt
 
 log "Reinstalando rest_framework_simplejwt para resolver compatibilidade..."
 pip uninstall -y djangorestframework-simplejwt
