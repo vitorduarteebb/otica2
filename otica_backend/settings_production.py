@@ -1,5 +1,5 @@
 """
-Django settings for otica_backend project - Production configuration.
+Django settings for otica_backend project - PRODUCTION
 """
 
 from pathlib import Path
@@ -10,12 +10,17 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'change-this-in-production')
+SECRET_KEY = 'django-insecure-production-secret-key-change-this-in-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your-domain.com']
+ALLOWED_HOSTS = [
+    'oticahospitaldosoculos.com.br',
+    '147.93.33.122',
+    'localhost',
+    '127.0.0.1',
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -31,9 +36,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -61,11 +66,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'otica_backend.wsgi.application'
 
-# Database
+# Database - PostgreSQL para produção
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'otica_db',
+        'USER': 'otica_user',
+        'PASSWORD': 'otica_password_2024',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -95,12 +104,12 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/otica2/static/'
+STATIC_ROOT = '/opt/otica/staticfiles'
 
 # Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/otica2/media/'
+MEDIA_ROOT = '/opt/otica/media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -143,13 +152,20 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 }
 
-# CORS settings - Configure for your frontend domain
+# CORS settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://your-frontend-domain.com",
+    "http://oticahospitaldosoculos.com.br",
+    "https://oticahospitaldosoculos.com.br",
+    "http://147.93.33.122",
+    "https://147.93.33.122",
 ]
-CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://oticahospitaldosoculos.com.br",
+    "https://oticahospitaldosoculos.com.br",
+    "http://147.93.33.122",
+    "https://147.93.33.122",
+]
 
 # Security settings for production
 SECURE_BROWSER_XSS_FILTER = True
@@ -161,8 +177,25 @@ SECURE_HSTS_PRELOAD = True
 
 # Session settings
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = True  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SECURE = True  # Set to True in production with HTTPS
+CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SAMESITE = 'Lax' 
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': '/opt/otica/logs/django.log',
+        },
+    },
+    'root': {
+        'handlers': ['file'],
+        'level': 'INFO',
+    },
+} 

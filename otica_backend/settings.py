@@ -31,9 +31,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -144,8 +144,19 @@ SIMPLE_JWT = {
 }
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Only for development
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://oticahospitaldosoculos.com.br",
+    "https://oticahospitaldosoculos.com.br",
+    "http://147.93.33.122",
+    "https://147.93.33.122",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://oticahospitaldosoculos.com.br",
+    "https://oticahospitaldosoculos.com.br",
+    "http://147.93.33.122",
+    "https://147.93.33.122",
+]
 
 # Session settings
 SESSION_COOKIE_HTTPONLY = True
