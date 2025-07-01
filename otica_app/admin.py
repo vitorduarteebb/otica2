@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Store, Product, StoreProduct, Seller, Sale, SaleItem, StockMovement, CashFlow, Category, Cliente
+from .models import User, Store, Product, StoreProduct, Seller, Sale, SaleItem, StockMovement, CashFlow, Category, Cliente, Fornecedor, Funcionario, ContaPagar, ContaReceber, FolhaPagamento, RelatorioFinanceiro
 
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'is_staff', 'store')
@@ -75,6 +75,56 @@ class SellerAdmin(admin.ModelAdmin):
 class ClienteAdmin(admin.ModelAdmin):
     list_display = ('nome', 'email', 'telefone', 'cpf', 'grau_od', 'grau_oe', 'dnp_od', 'dnp_oe', 'adicao')
     search_fields = ('nome', 'email', 'cpf')
+
+# Admin para Gestão Financeira
+@admin.register(Fornecedor)
+class FornecedorAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'cnpj', 'cpf', 'email', 'telefone', 'cidade', 'estado', 'ativo')
+    list_filter = ('ativo', 'estado', 'cidade')
+    search_fields = ('nome', 'cnpj', 'cpf', 'email')
+    ordering = ('nome',)
+
+@admin.register(Funcionario)
+class FuncionarioAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'cargo', 'store', 'data_admissao', 'salario_base', 'comissao_percentual', 'ativo')
+    list_filter = ('cargo', 'store', 'ativo', 'data_admissao')
+    search_fields = ('nome', 'cpf', 'email')
+    ordering = ('nome',)
+    date_hierarchy = 'data_admissao'
+
+@admin.register(ContaPagar)
+class ContaPagarAdmin(admin.ModelAdmin):
+    list_display = ('descricao', 'tipo', 'fornecedor', 'funcionario', 'valor', 'data_vencimento', 'status', 'store')
+    list_filter = ('tipo', 'status', 'store', 'data_vencimento')
+    search_fields = ('descricao', 'fornecedor__nome', 'funcionario__nome')
+    ordering = ('data_vencimento',)
+    date_hierarchy = 'data_vencimento'
+    readonly_fields = ('valor_restante', 'dias_vencimento')
+
+@admin.register(ContaReceber)
+class ContaReceberAdmin(admin.ModelAdmin):
+    list_display = ('descricao', 'tipo', 'cliente', 'valor', 'data_vencimento', 'status', 'store')
+    list_filter = ('tipo', 'status', 'store', 'data_vencimento')
+    search_fields = ('descricao', 'cliente__nome')
+    ordering = ('data_vencimento',)
+    date_hierarchy = 'data_vencimento'
+    readonly_fields = ('valor_restante', 'dias_vencimento')
+
+@admin.register(FolhaPagamento)
+class FolhaPagamentoAdmin(admin.ModelAdmin):
+    list_display = ('funcionario', 'ano', 'mes', 'salario_base', 'comissao', 'bonus', 'descontos', 'salario_liquido', 'pago')
+    list_filter = ('ano', 'mes', 'pago', 'funcionario__store')
+    search_fields = ('funcionario__nome',)
+    ordering = ('-ano', '-mes')
+    readonly_fields = ('salario_liquido',)
+
+@admin.register(RelatorioFinanceiro)
+class RelatorioFinanceiroAdmin(admin.ModelAdmin):
+    list_display = ('store', 'tipo', 'data_inicio', 'data_fim', 'receita_total', 'despesa_total', 'lucro_bruto', 'margem_lucro')
+    list_filter = ('tipo', 'store', 'data_inicio', 'data_fim')
+    search_fields = ('store__name',)
+    ordering = ('-data_fim',)
+    readonly_fields = ('receita_total', 'despesa_total', 'lucro_bruto', 'margem_lucro')
 
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Store, StoreAdmin)

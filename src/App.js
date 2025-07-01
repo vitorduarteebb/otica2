@@ -21,6 +21,7 @@ import AdminOrders from './pages/admin/Orders';
 import GerenteOrders from './pages/gerente/Orders';
 import Clientes from './pages/admin/Clientes';
 import ClientePerfil from './pages/admin/ClientePerfil';
+import Financeiro from './pages/admin/Financeiro';
 
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
   const { user, loading } = useAuth();
@@ -76,6 +77,7 @@ const AppRoutes = () => {
                 <Route path="reports" element={<Reports />} />
                 <Route path="cash-till" element={<CashTill />} />
                 <Route path="orders" element={<AdminOrders />} />
+                <Route path="financeiro" element={<Financeiro />} />
               </Routes>
             </Layout>
           </PrivateRoute>

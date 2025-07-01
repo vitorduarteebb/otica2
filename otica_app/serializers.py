@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
-from .models import User, Store, Product, Seller, Sale, SaleItem, StockMovement, CashFlow, StoreProduct, CashTillSession, Order, Category, Cliente
+from .models import User, Store, Product, Seller, Sale, SaleItem, StockMovement, CashFlow, StoreProduct, CashTillSession, Order, Category, Cliente, Fornecedor, Funcionario, ContaPagar, ContaReceber, FolhaPagamento, RelatorioFinanceiro
 from django.db.models import Sum
 
 
@@ -309,8 +309,101 @@ class CashTillSessionSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     store_name = serializers.CharField(source='store.name', read_only=True)
     seller_name = serializers.CharField(source='seller.name', read_only=True, allow_null=True)
-
+    
     class Meta:
         model = Order
         fields = '__all__'
         read_only_fields = ['store'] 
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            if request.user.store:
+                validated_data['store'] = request.user.store
+        return super().create(validated_data)
+
+
+# Serializers para Gestão Financeira
+class FornecedorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fornecedor
+        fields = '__all__'
+
+
+class FuncionarioSerializer(serializers.ModelSerializer):
+    store_name = serializers.CharField(source='store.name', read_only=True)
+    cargo_display = serializers.CharField(source='get_cargo_display', read_only=True)
+    
+    class Meta:
+        model = Funcionario
+        fields = '__all__'
+
+
+class ContaPagarSerializer(serializers.ModelSerializer):
+    fornecedor_nome = serializers.CharField(source='fornecedor.nome', read_only=True)
+    funcionario_nome = serializers.CharField(source='funcionario.nome', read_only=True)
+    store_name = serializers.CharField(source='store.name', read_only=True)
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    valor_restante = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    dias_vencimento = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = ContaPagar
+        fields = '__all__'
+
+
+class ContaReceberSerializer(serializers.ModelSerializer):
+    cliente_nome = serializers.CharField(source='cliente.nome', read_only=True)
+    store_name = serializers.CharField(source='store.name', read_only=True)
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    valor_restante = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    dias_vencimento = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = ContaReceber
+        fields = '__all__'
+
+
+class FolhaPagamentoSerializer(serializers.ModelSerializer):
+    funcionario_nome = serializers.CharField(source='funcionario.nome', read_only=True)
+    funcionario_cargo = serializers.CharField(source='funcionario.get_cargo_display', read_only=True)
+    mes_display = serializers.CharField(source='get_mes_display', read_only=True)
+    
+    class Meta:
+        model = FolhaPagamento
+        fields = '__all__'
+
+
+class RelatorioFinanceiroSerializer(serializers.ModelSerializer):
+    store_name = serializers.CharField(source='store.name', read_only=True)
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    
+    class Meta:
+        model = RelatorioFinanceiro
+        fields = '__all__'
+
+
+# Serializers para dashboards e relatórios
+class DashboardFinanceiroSerializer(serializers.Serializer):
+    """Serializer para dados do dashboard financeiro"""
+    total_receitas = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_despesas = serializers.DecimalField(max_digits=12, decimal_places=2)
+    lucro_bruto = serializers.DecimalField(max_digits=12, decimal_places=2)
+    margem_lucro = serializers.DecimalField(max_digits=5, decimal_places=2)
+    contas_pagar_vencidas = serializers.IntegerField()
+    contas_receber_vencidas = serializers.IntegerField()
+    total_funcionarios = serializers.IntegerField()
+    folha_pagamento_mes = serializers.DecimalField(max_digits=12, decimal_places=2)
+    fornecedores_ativos = serializers.IntegerField()
+
+
+class ResumoContasSerializer(serializers.Serializer):
+    """Serializer para resumo de contas"""
+    contas_pagar_pendentes = serializers.DecimalField(max_digits=12, decimal_places=2)
+    contas_pagar_vencidas = serializers.DecimalField(max_digits=12, decimal_places=2)
+    contas_receber_pendentes = serializers.DecimalField(max_digits=12, decimal_places=2)
+    contas_receber_vencidas = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_pagar = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_receber = serializers.DecimalField(max_digits=12, decimal_places=2) 

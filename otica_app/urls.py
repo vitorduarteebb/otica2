@@ -8,6 +8,14 @@ router.register(r'cash-till-sessions', views.CashTillSessionViewSet, basename='c
 router.register(r'orders', views.OrderViewSet, basename='order')
 router.register(r'clientes', views.ClienteViewSet, basename='cliente')
 
+# Rotas para Gestão Financeira
+router.register(r'fornecedores', views.FornecedorViewSet, basename='fornecedor')
+router.register(r'funcionarios', views.FuncionarioViewSet, basename='funcionario')
+router.register(r'contas-pagar', views.ContaPagarViewSet, basename='conta-pagar')
+router.register(r'contas-receber', views.ContaReceberViewSet, basename='conta-receber')
+router.register(r'folha-pagamento', views.FolhaPagamentoViewSet, basename='folha-pagamento')
+router.register(r'relatorios-financeiros', views.RelatorioFinanceiroViewSet, basename='relatorio-financeiro')
+
 urlpatterns = [
     # Auth
     path('auth/login/', views.login_view, name='login'),
@@ -42,6 +50,10 @@ urlpatterns = [
     path('reports/sales/', views.SalesReportView.as_view(), name='sales-report'),
     path('reports/products/', views.ProductsReportView.as_view(), name='products-report'),
     path('reports/dashboard-stats/', views.DashboardStatsView.as_view(), name='dashboard-stats'),
+    
+    # Financial Reports
+    path('financeiro/dashboard/', views.dashboard_financeiro, name='dashboard-financeiro'),
+    path('financeiro/resumo-contas/', views.resumo_contas, name='resumo-contas'),
     
     # Include router URLs
     path('', include(router.urls)),

@@ -17,7 +17,8 @@ import {
   Glasses,
   DollarSign,
   ClipboardList,
-  Tag
+  Tag,
+  TrendingUp
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -40,6 +41,7 @@ const Layout = ({ children }) => {
     { name: 'Produtos', href: user?.role === 'admin' ? '/admin/products' : '/gerente/products', icon: Package, roles: ['admin', 'gerente'] },
     { name: 'Estoque', href: user?.role === 'admin' ? '/admin/inventory' : '/gerente/inventory', icon: Archive, roles: ['admin', 'gerente'] },
     { name: 'Relatórios', href: user?.role === 'admin' ? '/admin/reports' : '/gerente/reports', icon: BarChart, roles: ['admin', 'gerente'] },
+    { name: 'Gestão Financeira', href: '/admin/financeiro', icon: TrendingUp, roles: ['admin'] },
     { name: 'Lojas', href: '/admin/stores', icon: Store, roles: ['admin'] },
     { name: 'Vendedores', href: '/admin/sellers', icon: UserSquare, roles: ['admin'] },
     { name: 'Usuários', href: '/admin/users', icon: Users, roles: ['admin'] },

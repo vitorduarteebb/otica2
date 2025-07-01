@@ -4,11 +4,11 @@ from rest_framework.response import Response
 from django.db.models import Sum, Count, F, DecimalField, ExpressionWrapper
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User, Store, Product, Seller, Sale, SaleItem, StoreProduct, CashTillSession, Order, Category, Cliente
+from .models import User, Store, Product, Seller, Sale, SaleItem, StoreProduct, CashTillSession, Order, Category, Cliente, Fornecedor, ContaPagar, ContaReceber, Funcionario, FolhaPagamento, RelatorioFinanceiro
 from .serializers import (
     UserSerializer, StoreSerializer, ProductSerializer, SellerSerializer,
     SaleSerializer, SaleCreateSerializer, StoreProductSerializer, CashTillSessionSerializer,
-    OrderSerializer, CategorySerializer, ClienteSerializer
+    OrderSerializer, CategorySerializer, ClienteSerializer, FornecedorSerializer, FuncionarioSerializer, ContaPagarSerializer, ContaReceberSerializer, FolhaPagamentoSerializer, RelatorioFinanceiroSerializer
 )
 from rest_framework.serializers import ValidationError
 from django.utils import timezone
@@ -582,4 +582,358 @@ class OrderViewSet(viewsets.ModelViewSet):
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all().order_by('-criado_em')
     serializer_class = ClienteSerializer
-    permission_classes = [permissions.IsAuthenticated] 
+    permission_classes = [permissions.IsAuthenticated]
+
+# --- Views para Gestão Financeira ---
+
+class FornecedorViewSet(viewsets.ModelViewSet):
+    queryset = Fornecedor.objects.filter(ativo=True).order_by('nome')
+    serializer_class = FornecedorSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return Fornecedor.objects.filter(ativo=True).order_by('nome')
+        elif user.store:
+            # Filtrar fornecedores que têm contas relacionadas à loja do usuário
+            fornecedores_ids = ContaPagar.objects.filter(
+                store=user.store, 
+                fornecedor__isnull=False
+            ).values_list('fornecedor_id', flat=True).distinct()
+            return Fornecedor.objects.filter(id__in=fornecedores_ids, ativo=True).order_by('nome')
+        return Fornecedor.objects.none()
+
+class FuncionarioViewSet(viewsets.ModelViewSet):
+    serializer_class = FuncionarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return Funcionario.objects.filter(ativo=True).order_by('nome')
+        elif user.store:
+            return Funcionario.objects.filter(store=user.store, ativo=True).order_by('nome')
+        return Funcionario.objects.none()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.role != 'admin' and user.store:
+            serializer.save(store=user.store)
+        else:
+            serializer.save()
+
+class ContaPagarViewSet(viewsets.ModelViewSet):
+    serializer_class = ContaPagarSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = ContaPagar.objects.all()
+        
+        if user.role != 'admin' and user.store:
+            queryset = queryset.filter(store=user.store)
+        
+        # Filtros
+        status = self.request.query_params.get('status')
+        tipo = self.request.query_params.get('tipo')
+        fornecedor = self.request.query_params.get('fornecedor')
+        data_vencimento_inicio = self.request.query_params.get('data_vencimento_inicio')
+        data_vencimento_fim = self.request.query_params.get('data_vencimento_fim')
+        
+        if status:
+            queryset = queryset.filter(status=status)
+        if tipo:
+            queryset = queryset.filter(tipo=tipo)
+        if fornecedor:
+            queryset = queryset.filter(fornecedor_id=fornecedor)
+        if data_vencimento_inicio:
+            queryset = queryset.filter(data_vencimento__gte=data_vencimento_inicio)
+        if data_vencimento_fim:
+            queryset = queryset.filter(data_vencimento__lte=data_vencimento_fim)
+        
+        return queryset.order_by('data_vencimento')
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.role != 'admin' and user.store:
+            serializer.save(store=user.store)
+        else:
+            serializer.save()
+
+    @action(detail=True, methods=['post'])
+    def marcar_pago(self, request, pk=None):
+        conta = self.get_object()
+        valor_pago = request.data.get('valor_pago', conta.valor)
+        data_pagamento = request.data.get('data_pagamento', timezone.now().date())
+        
+        conta.valor_pago = valor_pago
+        conta.data_pagamento = data_pagamento
+        conta.status = 'pago'
+        conta.save()
+        
+        serializer = self.get_serializer(conta)
+        return Response(serializer.data)
+
+class ContaReceberViewSet(viewsets.ModelViewSet):
+    serializer_class = ContaReceberSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = ContaReceber.objects.all()
+        
+        if user.role != 'admin' and user.store:
+            queryset = queryset.filter(store=user.store)
+        
+        # Filtros
+        status = self.request.query_params.get('status')
+        tipo = self.request.query_params.get('tipo')
+        cliente = self.request.query_params.get('cliente')
+        data_vencimento_inicio = self.request.query_params.get('data_vencimento_inicio')
+        data_vencimento_fim = self.request.query_params.get('data_vencimento_fim')
+        
+        if status:
+            queryset = queryset.filter(status=status)
+        if tipo:
+            queryset = queryset.filter(tipo=tipo)
+        if cliente:
+            queryset = queryset.filter(cliente_id=cliente)
+        if data_vencimento_inicio:
+            queryset = queryset.filter(data_vencimento__gte=data_vencimento_inicio)
+        if data_vencimento_fim:
+            queryset = queryset.filter(data_vencimento__lte=data_vencimento_fim)
+        
+        return queryset.order_by('data_vencimento')
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.role != 'admin' and user.store:
+            serializer.save(store=user.store)
+        else:
+            serializer.save()
+
+    @action(detail=True, methods=['post'])
+    def marcar_recebido(self, request, pk=None):
+        conta = self.get_object()
+        valor_recebido = request.data.get('valor_recebido', conta.valor)
+        data_recebimento = request.data.get('data_recebimento', timezone.now().date())
+        
+        conta.valor_recebido = valor_recebido
+        conta.data_recebimento = data_recebimento
+        conta.status = 'recebido'
+        conta.save()
+        
+        serializer = self.get_serializer(conta)
+        return Response(serializer.data)
+
+class FolhaPagamentoViewSet(viewsets.ModelViewSet):
+    serializer_class = FolhaPagamentoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = FolhaPagamento.objects.all()
+        
+        if user.role != 'admin' and user.store:
+            queryset = queryset.filter(funcionario__store=user.store)
+        
+        # Filtros
+        funcionario = self.request.query_params.get('funcionario')
+        ano = self.request.query_params.get('ano')
+        mes = self.request.query_params.get('mes')
+        pago = self.request.query_params.get('pago')
+        
+        if funcionario:
+            queryset = queryset.filter(funcionario_id=funcionario)
+        if ano:
+            queryset = queryset.filter(ano=ano)
+        if mes:
+            queryset = queryset.filter(mes=mes)
+        if pago is not None:
+            queryset = queryset.filter(pago=pago.lower() == 'true')
+        
+        return queryset.order_by('-ano', '-mes')
+
+    @action(detail=True, methods=['post'])
+    def marcar_pago(self, request, pk=None):
+        folha = self.get_object()
+        data_pagamento = request.data.get('data_pagamento', timezone.now().date())
+        
+        folha.data_pagamento = data_pagamento
+        folha.pago = True
+        folha.save()
+        
+        serializer = self.get_serializer(folha)
+        return Response(serializer.data)
+
+class RelatorioFinanceiroViewSet(viewsets.ModelViewSet):
+    serializer_class = RelatorioFinanceiroSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = RelatorioFinanceiro.objects.all()
+        
+        if user.role != 'admin' and user.store:
+            queryset = queryset.filter(store=user.store)
+        
+        return queryset.order_by('-data_fim')
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.role != 'admin' and user.store:
+            serializer.save(store=user.store)
+        else:
+            serializer.save()
+
+# --- Views para Dashboards e Relatórios ---
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def dashboard_financeiro(request):
+    """Dashboard com resumo financeiro"""
+    user = request.user
+    hoje = timezone.now().date()
+    
+    # Filtro por loja
+    if user.role != 'admin' and user.store:
+        store_filter = {'store': user.store}
+    else:
+        store_filter = {}
+    
+    # Período (mês atual)
+    mes_atual = hoje.month
+    ano_atual = hoje.year
+    
+    # Receitas do mês
+    receitas_vendas = Sale.objects.filter(
+        sale_date__month=mes_atual,
+        sale_date__year=ano_atual,
+        **store_filter
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    receitas_servicos = ContaReceber.objects.filter(
+        tipo='servico',
+        data_recebimento__month=mes_atual,
+        data_recebimento__year=ano_atual,
+        status='recebido',
+        **store_filter
+    ).aggregate(total=Sum('valor_recebido'))['total'] or 0
+    
+    receita_total = receitas_vendas + receitas_servicos
+    
+    # Despesas do mês
+    despesas_fornecedores = ContaPagar.objects.filter(
+        tipo='fornecedor',
+        data_pagamento__month=mes_atual,
+        data_pagamento__year=ano_atual,
+        status='pago',
+        **store_filter
+    ).aggregate(total=Sum('valor_pago'))['total'] or 0
+    
+    despesas_funcionarios = FolhaPagamento.objects.filter(
+        ano=ano_atual,
+        mes=mes_atual,
+        pago=True,
+        funcionario__store__in=Store.objects.filter(**store_filter) if store_filter else Store.objects.all()
+    ).aggregate(total=Sum('salario_liquido'))['total'] or 0
+    
+    despesa_total = despesas_fornecedores + despesas_funcionarios
+    
+    # Contas vencidas
+    contas_pagar_vencidas = ContaPagar.objects.filter(
+        data_vencimento__lt=hoje,
+        status='pendente',
+        **store_filter
+    ).count()
+    
+    contas_receber_vencidas = ContaReceber.objects.filter(
+        data_vencimento__lt=hoje,
+        status='pendente',
+        **store_filter
+    ).count()
+    
+    # Funcionários
+    total_funcionarios = Funcionario.objects.filter(
+        ativo=True,
+        **store_filter
+    ).count()
+    
+    # Folha do mês
+    folha_pagamento_mes = FolhaPagamento.objects.filter(
+        ano=ano_atual,
+        mes=mes_atual,
+        funcionario__store__in=Store.objects.filter(**store_filter) if store_filter else Store.objects.all()
+    ).aggregate(total=Sum('salario_liquido'))['total'] or 0
+    
+    # Fornecedores ativos
+    fornecedores_ativos = Fornecedor.objects.filter(ativo=True).count()
+    
+    # Cálculos
+    lucro_bruto = receita_total - despesa_total
+    margem_lucro = (lucro_bruto / receita_total * 100) if receita_total > 0 else 0
+    
+    data = {
+        'total_receitas': receita_total,
+        'total_despesas': despesa_total,
+        'lucro_bruto': lucro_bruto,
+        'margem_lucro': round(margem_lucro, 2),
+        'contas_pagar_vencidas': contas_pagar_vencidas,
+        'contas_receber_vencidas': contas_receber_vencidas,
+        'total_funcionarios': total_funcionarios,
+        'folha_pagamento_mes': folha_pagamento_mes,
+        'fornecedores_ativos': fornecedores_ativos,
+    }
+    
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def resumo_contas(request):
+    """Resumo de contas a pagar e receber"""
+    user = request.user
+    hoje = timezone.now().date()
+    
+    # Filtro por loja
+    if user.role != 'admin' and user.store:
+        store_filter = {'store': user.store}
+    else:
+        store_filter = {}
+    
+    # Contas a pagar
+    contas_pagar_pendentes = ContaPagar.objects.filter(
+        status='pendente',
+        data_vencimento__gte=hoje,
+        **store_filter
+    ).aggregate(total=Sum('valor'))['total'] or 0
+    
+    contas_pagar_vencidas = ContaPagar.objects.filter(
+        status='pendente',
+        data_vencimento__lt=hoje,
+        **store_filter
+    ).aggregate(total=Sum('valor'))['total'] or 0
+    
+    # Contas a receber
+    contas_receber_pendentes = ContaReceber.objects.filter(
+        status='pendente',
+        data_vencimento__gte=hoje,
+        **store_filter
+    ).aggregate(total=Sum('valor'))['total'] or 0
+    
+    contas_receber_vencidas = ContaReceber.objects.filter(
+        status='pendente',
+        data_vencimento__lt=hoje,
+        **store_filter
+    ).aggregate(total=Sum('valor'))['total'] or 0
+    
+    data = {
+        'contas_pagar_pendentes': contas_pagar_pendentes,
+        'contas_pagar_vencidas': contas_pagar_vencidas,
+        'contas_receber_pendentes': contas_receber_pendentes,
+        'contas_receber_vencidas': contas_receber_vencidas,
+        'total_pagar': contas_pagar_pendentes + contas_pagar_vencidas,
+        'total_receber': contas_receber_pendentes + contas_receber_vencidas,
+    }
+    
+    return Response(data) 

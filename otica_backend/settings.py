@@ -145,13 +145,23 @@ SIMPLE_JWT = {
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
     "http://oticahospitaldosoculos.com.br",
     "https://oticahospitaldosoculos.com.br",
     "http://147.93.33.122",
     "https://147.93.33.122",
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+
 CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
     "http://oticahospitaldosoculos.com.br",
     "https://oticahospitaldosoculos.com.br",
     "http://147.93.33.122",
